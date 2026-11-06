@@ -166,7 +166,43 @@
       aim: null,
       stop: null,
       init() {
-        ['pointerdown', 'wheel'].forEach((t) => this.$refs.slides.addEventListener(t, () => this.halt(), { passive: true }));
+        const s = this.$refs.slides;
+        s.addEventListener('wheel', () => this.halt(), { passive: true });
+        // A finger: the strip follows it and, let go, moves one photo at most. The browser's own snap lets a strong
+        // flick fly past two despite scroll-snap-stop (phones). Up and down stay the page's scroll.
+        s.style.touchAction = 'pan-y';
+        let drag = null;
+        s.addEventListener('pointerdown', (e) => {
+          this.halt();
+          drag = e.pointerType === 'mouse' ? null : { id: e.pointerId, x: e.clientX, y: e.clientY, from: s.scrollLeft, t: e.timeStamp, on: false };
+        }, { passive: true });
+        s.addEventListener('pointermove', (e) => {
+          if (!drag || e.pointerId !== drag.id) return;
+          const dx = e.clientX - drag.x;
+          if (!drag.on) {
+            if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - drag.y)) return;
+            drag.on = true;
+            this.aim = drag.from; // sync() waits until the photo is chosen
+            s.style.scrollSnapType = 'none';
+          }
+          s.scrollLeft = drag.from - dx;
+        }, { passive: true });
+        const end = (e) => {
+          if (!drag || e.pointerId !== drag.id) return;
+          const d = drag;
+          drag = null;
+          if (!d.on) return;
+          const w = s.clientWidth, dx = e.clientX - d.x, dt = e.timeStamp - d.t;
+          const start = Math.round(d.from / w);
+          // Far enough or quick enough: the next photo in that direction; otherwise back to this one.
+          const step = e.type === 'pointerup' && (Math.abs(dx) > w * .2 || (Math.abs(dx) > 24 && dt < 300)) ? -Math.sign(dx) : 0;
+          this.i = Math.min(this.n - 1, Math.max(0, start + step));
+          this.light();
+          this.aim = null;
+          this.glide(this.i * w);
+        };
+        s.addEventListener('pointerup', end);
+        s.addEventListener('pointercancel', end);
       },
       sync() {
         if (this.aim !== null) return;
