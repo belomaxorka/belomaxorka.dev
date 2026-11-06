@@ -7,7 +7,7 @@
   let ctx = null, master = null, hum = null, humGain = null, timer = 0, lastBeep = 0, surgeUntil = 0, rebooting = false;
 
   function start() {
-    if (ctx) { ctx.resume(); return; }
+    if (ctx) { ctx.resume().catch(() => {}); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     ctx = new AC();
@@ -111,8 +111,15 @@
   document.addEventListener('DOMContentLoaded', show);
   document.addEventListener('rack:laidout', show);
 
-  // Only a press can turn it on: a saved "on" waits for the first click on the page.
-  document.addEventListener('pointerdown', () => { if (on && !ctx) set(true); }, { capture: true, once: true });
+  // Only a press can turn it on: a saved "on" waits for the first gesture on the page. On a touch screen a finger going
+  // down is not one, its lifting is (and a swipe may not be), so every gesture tries until the sound runs; it also wakes
+  // a context a phone suspended behind our back.
+  const wake = () => {
+    if (!on || document.hidden) return;
+    if (!ctx) set(true);
+    else if (ctx.state !== 'running') ctx.resume().catch(() => {});
+  };
+  ['pointerdown', 'pointerup', 'touchend', 'keydown', 'click'].forEach((t) => document.addEventListener(t, wake, { capture: true, passive: true }));
 
   // ---------- events ----------
   document.addEventListener('click', (e) => {
