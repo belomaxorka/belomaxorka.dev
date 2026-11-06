@@ -513,18 +513,24 @@
     const lowEl = tor.nextElementSibling?.classList.contains('brush') && tor.nextElementSibling.offsetParent ? tor.nextElementSibling : null;
     // Up into the yellow duct on the ceiling: the entry on its axis (the .mark lines, hall.css); without a ceiling (light
     // theme) or with the duct below the roof, straight up. The tail runs from the jack to the brush.
+    // Without the organiser (narrow: network.css) the router's WAN goes out of its jack's top left, over the router's
+    // name, and up the rack's left side; the switch's uplink would cross its ports, so it has none there.
     const fiber = (key, from, color, label, port = null) => {
-      if (!vmEl || !vmEl.offsetParent) return;
-      const v = box(vmEl), x = v.x + v.w - 4;
-      const y = lowEl ? box(lowEl).cy + 6 : from.y - 14;
+      const side = !!vmEl?.offsetParent;
+      if (!side && key !== 'wan') return;
+      const x = side ? box(vmEl).x + box(vmEl).w - 4 : box(rack).x - 5;
+      const y = side ? (lowEl ? box(lowEl).cy + 6 : from.y - 14) : from.y - 4;
       const marks = [...document.querySelectorAll('.hall .mark')].filter(m => m.offsetParent).map(box);
       const j = marks.reduce((a, m) => (!a || Math.abs(m.cy - 40) < Math.abs(a.cy - 40) ? m : a), null);
       const r = 14, s = j && Math.sign(j.cx - x) || 1;
       const top = j && j.cy < cap.y - 30
         ? `L${x} ${j.cy + r} Q${x} ${j.cy}, ${x + s * r} ${j.cy} L${j.cx} ${j.cy}`
         : `C${x} ${cap.y - 16}, ${x} ${cap.y - 30}, ${x} -10`;
-      const tail = [{ x: from.cx, y: from.y + 2 }, { x: from.cx, y: y + 8 }, { x: from.cx - 10, y }, { x: from.cx - 24, y }];
-      pullable(key, key, port, from, color, 3, tail, `L${x + 14} ${y} C${x + 4} ${y}, ${x} ${y - 6}, ${x} ${y - 18} L${x} ${cap.y + 4} ${top}`);
+      const tail = side
+        ? [{ x: from.cx, y: from.y + 2 }, { x: from.cx, y: y + 8 }, { x: from.cx - 10, y }, { x: from.cx - 24, y }]
+        : [{ x: from.cx, y: from.y + 2 }, { x: from.cx, y: y - 4 }, { x: from.cx - 6, y }, { x: from.cx - 16, y }];
+      const up = side ? `C${x + 4} ${y}, ${x} ${y - 6}, ${x} ${y - 18}` : `Q${x} ${y}, ${x} ${y - 8}`;
+      pullable(key, key, port, from, color, 3, tail, `L${x + (side ? 14 : 8)} ${y} ${up} L${x} ${cap.y + 4} ${top}`);
       if (j && j.cy < cap.y - 30) {
         const n = marks[Math.max(0, marks.indexOf(j) - 1)];
         const len = Math.hypot(n.cx - j.cx, n.cy - j.cy) || 1;
