@@ -120,6 +120,16 @@
       destroy() { clearInterval(this.timer); },
     }));
 
+    // The server's key stickers: a phone shows one "keys" sticker (server.css) that lays the others out under it.
+    Alpine.data('keyring', () => ({
+      init() { this.$root.classList.add('keyring'); },
+      toggle() {
+        const open = this.$root.classList.toggle('open');
+        this.$root.querySelector('.keys-btn')?.setAttribute('aria-expanded', String(open));
+        document.dispatchEvent(new Event('rack:layout')); // the unit's height changed: the cables and the snap follow
+      },
+    }));
+
     // A 88x31 button's code to the clipboard; the captions are in data attributes.
     Alpine.data('copyCode', () => ({
       label: '',
