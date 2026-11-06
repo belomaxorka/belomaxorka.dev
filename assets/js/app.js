@@ -613,9 +613,24 @@
   const ro = window.ResizeObserver ? new ResizeObserver(() => {
     laidout(cables()); later();
   }) : null;
+  // A textarea the visitor drags smaller: snap's min-height keeps the unit (and the rack) as tall, so the observer above
+  // stays quiet. So the textareas are watched themselves; the first call is the one observe() makes, not a drag.
+  const fields = new Map(); // textarea -> its last height
+  const fro = window.ResizeObserver ? new ResizeObserver((entries) => {
+    let moved = false;
+    entries.forEach(({ target, contentRect: { height } }) => {
+      if (fields.get(target) !== undefined && fields.get(target) !== height) moved = true;
+      fields.set(target, height);
+    });
+    if (moved) later();
+  }) : null;
   function layout() {
     const body = document.getElementById('rack-body');
     if (ro && body && body !== watched) { if (watched) ro.unobserve(watched); ro.observe(body); watched = body; }
+    if (fro) {
+      fields.forEach((_, t) => { if (!t.isConnected) { fro.unobserve(t); fields.delete(t); } });
+      body?.querySelectorAll('textarea').forEach((t) => { if (!fields.has(t)) { fields.set(t, undefined); fro.observe(t); } });
+    }
     wire(); snap(); laidout(cables());
   }
 
