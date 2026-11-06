@@ -11,6 +11,7 @@
 .pp-ports .pn::before { counter-increment: port; content: counter(port); }
 /* The neighbours' names are the ring's: a long one is cut with an ellipsis (the hint has it whole) so the row holds. */
 .pp-ports .ring .nm { display: inline-block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; }
+.pp-ports .ring .sh { display: none; }
 /* The free jacks take what is left of the row, a jack every 28 px as on a real panel, and only as many as fit: the
    rest land in rows of no height, out of sight, so a long name never pushes jacks to a second row (app.js hangs the
    guests' cords on the visible ones). Narrower than a jack, the strip shows none; on a phone there is none. */
@@ -37,6 +38,14 @@
 @media (max-width: 560px) {
   .u.brush { display: none; }
   .patch .face { row-gap: 8px; }
+}
+/* A phone: the ring in one row. The neighbours are "prev" and "next" (the hint keeps the name), no random jack. */
+@media (max-width: 560px) {
+  .pp-ports { column-gap: 8px; }
+  .pp-ports .ring { gap: 5px; }
+  .pp-ports .ring .tape { padding-inline: 5px; letter-spacing: .06em; }
+  .pp-ports .ring .nm, .pp-ports .ring.rnd { display: none; }
+  .pp-ports .ring .sh { display: inline; }
 }
 
 /* ---------- switch ---------- */

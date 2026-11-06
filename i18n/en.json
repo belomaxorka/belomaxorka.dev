@@ -65,6 +65,8 @@
   "ring.prev": "previous",
   "ring.next": "next",
   "ring.random": "random",
+  "ring.prev_short": "prev",
+  "ring.next_short": "next",
   "ring.pending": "not in the ring yet",
 
   "nav.aria": "sections",

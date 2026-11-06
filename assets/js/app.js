@@ -431,12 +431,13 @@
     };
 
     // The ring: patch panel jacks 1-4 -> ports 1, 3, 5, 7 (top row), down through the brush. When the jacks wrap to two
-    // rows (phone), cords from the lower row only: from the upper one they would cross the labels.
-    const jacks = [...rack.querySelectorAll('.patch .ring .jack')].map(box);
-    const lowest = Math.max(...jacks.map(j => j.y));
+    // rows, cords from the lower row only: from the upper one they would cross the labels. A hidden jack (random, on a
+    // phone) has none; the others keep their ports and colours.
+    const jacks = [...rack.querySelectorAll('.patch .ring .jack')].map(j => j.offsetParent ? box(j) : null);
+    const lowest = Math.max(...jacks.filter(Boolean).map(j => j.y));
     jacks.forEach((j, i) => {
       const n = 1 + i * 2, t = port(n);
-      if (!t || !t.offsetParent || lowest - j.y > 4) return;
+      if (!j || !t || !t.offsetParent || lowest - j.y > 4) return;
       const p = box(t.querySelector('.jack'));
       cable(svg, `M${j.cx} ${j.b - 3} C${j.cx} ${j.b + 26}, ${p.cx} ${p.y - 30}, ${p.cx} ${p.y + 3}`, RING[i], 3.5);
       seat(svg, j, RING[i]);
