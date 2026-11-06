@@ -50,6 +50,11 @@
   let probing = null;      // the cable under the mouse (the cable tester)
   let room = null, svg = null, hand = null;
   let kick = 0; // the rack has arrived: which way the next layout swings the cables (1, -1)
+  // Whether the units' cords are drawn at this width (power.css hides the inlets on a narrow screen): without them
+  // every plug counts as in, as the network cards do (net.js). The pulled ones stay saved for a wider screen.
+  let cords = true;
+  const out = (r, k) => cords && !!r.unplugged[k];
+  const outs = (r) => (cords ? { ...r.unplugged } : {});
 
   const keyOf = (u) => Rack.keyOf(u);
   const el = Rack.svg;
@@ -82,7 +87,7 @@
   function powered(k) {
     const h = unitBy(k)?.dataset.host;
     if (h) return powered(h) && !queued.has(h);
-    return !state.off && !state.unplugged[k] && !dead();
+    return !state.off && !out(state, k) && !dead();
   }
 
   // A dark unit and its drawer are inert: no click, hover, focus or screen reader. Typed text and drawings stay.
@@ -184,6 +189,8 @@
       inlet(u);
       u.classList.add('has-psu'); // after htmx too: on settle it restores the unit's class from the response
     });
+    const first = units()[0]?.querySelector(':scope > .psu');
+    cords = !first || !!first.offsetParent;
     // The UPS has one too, low on its left (the wall socket's side): its own cord is plugged in there (mainsAnchors).
     if (upsUnit()) inlet(upsUnit());
     powers().forEach((u) => paint(u, keyOf(u), false));
@@ -522,7 +529,7 @@
     const R = room.getBoundingClientRect();
     const ups = upsUnit();
     const mainsAt = mainsAnchors(ups);
-    const placed = units().map((u) => [u, anchors(u)]);
+    const placed = cords ? units().map((u) => [u, anchors(u)]) : [];
     svg.setAttribute('viewBox', `0 0 ${R.width} ${R.height}`);
     const seen = new Set();
     if (ups) {
@@ -535,7 +542,7 @@
     placed.forEach(([u, { s, o }]) => {
       const k = keyOf(u);
       seen.add(k);
-      place(k, s, o, 12, Math.max(60, dist(s, o) * 1.6), !state.unplugged[k]);
+      place(k, s, o, 12, Math.max(60, dist(s, o) * 1.6), !out(state, k));
     });
     for (const [k, r] of ropes) if (!seen.has(k)) { r.view?.g.remove(); ropes.delete(k); }
     // The room's floor and walls: a pulled plug lands on the raised floor instead of flying off the page.
@@ -675,11 +682,11 @@
   // Another rack of the row (net.js: the first rack feeds the others their internet): whether its UPS gives power (noups:
   // a rack without one lives off the socket) and which plugs are out; draining: alive on battery, so ask again later.
   Rack.rackPower = (id, noups) => {
-    if (id === stateId && state) return { on: !state.off && !dead(), unplugged: { ...state.unplugged }, draining: !fed(state) && !dead() };
+    if (id === stateId && state) return { on: !state.off && !dead(), unplugged: outs(state), draining: !fed(state) && !dead() };
     const r = rackState(id);
     settle(r, Date.now());
     const on = !r.off && !(noups ? !fed(r) : dying(r));
-    return { on, unplugged: { ...r.unplugged }, draining: on && !fed(r) };
+    return { on, unplugged: outs(r), draining: on && !fed(r) };
   };
 
   // app.js lays the rack out; the cables right after it and in the same frame (draw in relayout), or they catch up

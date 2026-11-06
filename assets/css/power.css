@@ -4,7 +4,12 @@
   width: 13px; height: 11px; border-radius: 2px;
   background: var(--hole); box-shadow: inset 0 0 0 1px #000, 0 0 0 1px var(--panel-hi);
 }
-.u:is(.has-psu, [data-host]) .face { padding-right: 36px; } /* a guest keeps its host's inset */
+@media not all and (max-width: 760px) {
+  .u:is(.has-psu, [data-host]) .face { padding-right: 36px; } /* a guest keeps its host's inset */
+}
+/* Narrow, like the network cards (network.css): no inlets on the units and no cords to the PDU (power.js counts them as
+   plugged in), the room goes to the units' text. The UPS keeps its own cord to the socket. */
+@media (max-width: 760px) { .u:not(.ups) > .psu { display: none; } }
 /* The UPS's own inlet: low on its left, on the wall socket's side; its cord is plugged in there. */
 .ups > .psu { left: calc(var(--ear) + 6px); right: auto; top: auto; bottom: 14px; transform: none; }
 .ups:has(> .psu) .face { padding-left: 36px; }
