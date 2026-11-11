@@ -713,4 +713,55 @@
     // (cables.css: a wire .55 s, its plug after 480 ms for .3 s, each wire 70 ms after the previous). No drawing: all at once.
     document.dispatchEvent(new CustomEvent('rack:drawing', { detail: draw ? { lag: 700, step: 70 } : null }));
   });
+
+  // ---------- the 88x31 buttons ----------
+  // About 150 small pictures, a request each, far down the rack. They are lazy in the markup, so the page above them
+  // loads first; but a wall that starts loading only as it scrolls into view shows empty frames for a moment (longer
+  // on a slow link), and a picture whose one request failed stays broken for good. So, once the page has loaded and the
+  // browser has nothing to do, the pictures are fetched a few at a time, before anyone gets to them; and a picture that
+  // failed is asked for again. A visitor saving data or on a 2g link keeps them lazy.
+  const buttons = () => [...document.querySelectorAll('#rack-body :is(.b88 img, img.b88)')];
+  const idle = window.requestIdleCallback ? (fn) => requestIdleCallback(fn, { timeout: 2000 }) : (fn) => setTimeout(fn, 300);
+  let warming = 0; // the number of the latest run: a rack swapped in starts a new one, and the old one stops
+  function warm() {
+    const c = navigator.connection;
+    if (c && (c.saveData || /2g/.test(c.effectiveType || ''))) return;
+    const run = ++warming;
+    const queue = buttons().filter((i) => i.loading === 'lazy' && !i.complete);
+    const next = () => {
+      if (run !== warming) return;
+      const batch = queue.splice(0, 8).filter((i) => i.isConnected);
+      if (!batch.length) { if (queue.length) idle(next); return; }
+      // The next few when these are in (or have failed), or after a while if one of them never says.
+      let left = batch.length, went = false;
+      const on = () => { if (!went) { went = true; idle(next); } };
+      const one = () => { if (--left === 0) on(); };
+      setTimeout(on, 8000);
+      batch.forEach((i) => {
+        i.addEventListener('load', one, { once: true });
+        i.addEventListener('error', one, { once: true });
+        i.loading = 'eager';
+      });
+    };
+    idle(next);
+  }
+  if (document.readyState === 'complete') warm(); else addEventListener('load', warm);
+  document.addEventListener('rack:landed', warm);
+
+  // A button whose picture failed (a blip of the network, the server restarting) is asked for again: after 2 s, then
+  // after 8 s more. Error events do not bubble, so they are caught on the way down.
+  const tries = new WeakMap();
+  document.addEventListener('error', (e) => {
+    const i = e.target;
+    if (!(i instanceof HTMLImageElement) || !i.matches('.b88 img, img.b88')) return;
+    const n = tries.get(i) || 0;
+    if (n >= 2) return;
+    tries.set(i, n + 1);
+    setTimeout(() => {
+      if (!i.isConnected) return;
+      const src = i.getAttribute('src');
+      i.removeAttribute('src');
+      i.setAttribute('src', src);
+    }, n ? 8000 : 2000);
+  }, true);
 })();
