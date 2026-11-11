@@ -15,11 +15,20 @@
 
   document.addEventListener('rack:laidout', (e) => { if (Array.isArray(e.detail?.cords)) cords = e.detail.cords; torch(); });
 
+  let failed = 0; // answers in a row that were not a stream
   function connect() {
     const es = new EventSource('/events');
+    // A stream that drops (site-api restarting, the network) the browser opens again by itself. An answer that is not
+    // a stream it takes for good: the fallback server's 404 while site-api restarts, 503 for too many streams, an error
+    // page of the proxy. Then the page would stay without its guests and packets until a reload, so it asks again
+    // itself, later each time: after 10 s, 20 s, ... up to 2 minutes, give or take, so the pages do not all come at once.
+    es.addEventListener('error', () => {
+      if (es.readyState !== EventSource.CLOSED) return;
+      setTimeout(connect, Math.min(120000, 10000 * 2 ** failed++) * (0.75 + Math.random() / 2));
+    });
     // Every event came from the server along this stream: the lamps on the way to it blink. A broadcast (a guest came
     // or left, a visit, a guestbook entry) reached the guests too: their ports blink.
-    es.addEventListener('hello', (e) => { try { token = JSON.parse(e.data).token || ''; } catch {} pulse(site()); });
+    es.addEventListener('hello', (e) => { failed = 0; try { token = JSON.parse(e.data).token || ''; } catch {} pulse(site()); });
     es.addEventListener('beam', (e) => { try { if (Rack.reached()) spot(JSON.parse(e.data)); } catch {} pulse(site()); });
     es.addEventListener('beam-off', (e) => { try { gone(JSON.parse(e.data).id); } catch {} pulse(site()); });
     es.addEventListener('online', (e) => {
