@@ -18,7 +18,7 @@ jobs:
   check:
     runs-on: docker
     steps:
-      - uses: https://data.forgejo.org/actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: site
 
@@ -49,7 +49,7 @@ jobs:
     needs: check
     runs-on: docker
     steps:
-      - uses: https://data.forgejo.org/actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Pack site
         run: git archive --format=tar -o site.tar HEAD -- . ':(exclude,glob).*' ':(exclude,glob).*/**' ':(exclude)README.md' ':(exclude)tools'
