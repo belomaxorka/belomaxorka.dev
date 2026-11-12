@@ -2,7 +2,7 @@
 //   rack:layout   (any → app.js)        lay the rack out again
 //   rack:laidout  (app.js → all)        laid out; detail.cords, .loose (cards without a free port), .cards (drawn here)
 //   rack:swap     (aisle.js → all)      another rack is in the room; detail.quiet: no animation
-//   rack:landed   (aisle.js → all)      it has arrived; detail.dir: 1 forward, -1 back
+//   rack:landed   (aisle.js → all)      it has arrived; detail.dir: 1 forward, -1 back; detail.quiet: without the camera's move
 //   rack:drawing  (app.js → net.js)     the cords are being drawn; detail: { lag, step } in ms, or null
 //   rack:unit     (power.js → unit)     a unit went dark or booted; detail.key, detail.on
 //   rack:power    (power.js → all)      the whole rack went dark or came back; detail.on, detail.why

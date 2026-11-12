@@ -1,7 +1,8 @@
 // The aisle: the rack changes without a reload. Links to the row's racks (<html data-racks>), the arrow keys and a
 // swipe fetch the rack's page and swap #room; aisle.css moves the camera (View Transitions, or a copy of the old rack).
-// rack:swap: the new room is in place (detail.quiet: no animation); rack:landed: it has arrived (detail.dir). Without JS,
-// or when the fetch fails, a plain navigation.
+// rack:swap: the new room is in place (detail.quiet: no animation); rack:landed: it has arrived (detail.dir, and
+// detail.quiet when the camera did not move: no animation, or a swap cut short by the next one). Without JS, or when
+// the fetch fails, a plain navigation.
 (() => {
   const root = document.documentElement;
   const order = (root.dataset.racks || '').trim().split(/\s+/);
