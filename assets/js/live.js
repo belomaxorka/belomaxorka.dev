@@ -1,6 +1,7 @@
 // Live guests (site-api's /events, Server-Sent Events):
 //   online   other guests as patch cords from the patch panel to the switch (app.js draws them by data-guests on <html>);
-//            people only: a bot's stream is not counted (site-api, by the visit counter's rule);
+//            people only: a bot's stream is not counted (site-api, by the visit counter's rule), and a tab left in
+//            the background for a minute closes its stream until it is shown again;
 //   visit    a packet along the fibre to the server; gb: a packet to the KVM;
 //   act      once a second the server's real work: requests, sources fetched, state files written, Gatus checks run;
 //   fresh    units whose source brought new data refresh at once, once a packet reaches them;
@@ -17,15 +18,24 @@
   document.addEventListener('rack:laidout', (e) => { if (Array.isArray(e.detail?.cords)) cords = e.detail.cords; torch(); });
 
   let failed = 0; // answers in a row that were not a stream
+  let stream = null, retry = 0; // the open stream, and the timer of the next try after a refusal
+  // A guest is somebody looking at the page. A tab that has been in the background for AWAY is nobody's to look at:
+  // its stream is closed, so the others' cord for it comes out, and opened again when the tab is shown. Shorter than
+  // that (a glance at another tab, a file dialog) the guest has not left.
+  const AWAY = 60000;
+  let away = false, leaving = 0;
   function connect() {
-    const es = new EventSource('/events');
+    clearTimeout(retry);
+    if (stream || away) return;
+    const es = stream = new EventSource('/events');
     // A stream that drops (site-api restarting, the network) the browser opens again by itself. An answer that is not
     // a stream it takes for good: the fallback server's 404 while site-api restarts, 503 for too many streams, an error
     // page of the proxy. Then the page would stay without its guests and packets until a reload, so it asks again
     // itself, later each time: after 10 s, 20 s, ... up to 2 minutes, give or take, so the pages do not all come at once.
     es.addEventListener('error', () => {
-      if (es.readyState !== EventSource.CLOSED) return;
-      setTimeout(connect, Math.min(120000, 10000 * 2 ** failed++) * (0.75 + Math.random() / 2));
+      if (es.readyState !== EventSource.CLOSED || stream !== es) return;
+      stream = null;
+      retry = setTimeout(connect, Math.min(120000, 10000 * 2 ** failed++) * (0.75 + Math.random() / 2));
     });
     // Every event came from the server along this stream: the lamps on the way to it blink. A broadcast (a guest came
     // or left, a visit, a guestbook entry) reached the guests too: their ports blink.
@@ -57,8 +67,24 @@
       }
     });
   }
+  function watch() {
+    clearTimeout(leaving);
+    if (document.hidden) {
+      leaving = setTimeout(() => {
+        away = true;
+        clearTimeout(retry);
+        stream?.close();
+        stream = null;
+      }, AWAY);
+    } else if (away) {
+      away = false;
+      connect();
+    }
+  }
+  document.addEventListener('visibilitychange', watch);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', connect);
   else connect();
+  watch(); // a tab opened in the background is not looked at either
 
   // ---------- torches ----------
   const rackBox = () => document.getElementById('rack')?.getBoundingClientRect();
