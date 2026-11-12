@@ -1,6 +1,7 @@
 // Fails CI for a unit (class "u ...") that forgets a declaration the scripts go by (assets/js/rack.js): live data
 // (hx-*, data-live) without data-net, data-host or data-role; a declaration without data-key; a key used twice; an
-// unknown value; data-feed with a source site-api does not know; data-host naming no unit.
+// unknown value; data-host naming no unit. The sources a data-feed names are not checked here: they are site-api's,
+// and its -check, the next step of CI, fails for a name it has no source for (internal/web: checkFeeds).
 //
 //   node tools/check-units.mjs [templates]
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -12,8 +13,6 @@ const files = (function walk(d) {
 })(dir).filter((f) => !/[\\/]lite[\\/]/.test(f)); // the light version has no scripts and no units of this kind
 
 const NET = ['lan', 'wan'], ROLE = ['switch', 'router', 'ups'], LIVE = ['lamps', 'bar', 'text', 'image'], NEWS = ['', 'markup'], VLAN = ['mgmt'];
-// The sources data-feed can name: those of site-api's live stream (its TestEverySourceIsListed), plus site and guestbook.
-const FEEDS = ['gatus', 'github', 'koito', 'proxmox', 'telegram', 'ups', 'wakapi', 'webring', 'site', 'guestbook'];
 const attr = (tag, name) => { const m = tag.match(new RegExp(`\\s${name}(?:="([^"]*)")?(?=[\\s>{])`)); return m ? m[1] ?? '' : null; };
 const unitTag = /<([a-z]+)\s[^>]*class="u[ "][^>]*>/g;
 
@@ -36,7 +35,6 @@ for (const f of files) {
     const vlan = attr(tag, 'data-vlan'), feed = attr(tag, 'data-feed');
     if (vlan !== null && !VLAN.includes(vlan)) problems.push(`${where} data-vlan="${vlan}": ${VLAN.join(', ')}`);
     if (feed !== null && !feed.trim()) problems.push(`${where} data-feed names no source`);
-    for (const name of (feed || '').split(/\s+/).filter(Boolean)) if (!FEEDS.includes(name)) problems.push(`${where} data-feed "${name}": ${FEEDS.join(', ')}`);
     if (feed !== null && net === null && host === null) problems.push(`${where} data-feed without data-net or data-host: the data could not reach it`);
     for (const n of (tag + body).matchAll(/\sdata-news(?:="([^"]*)")?(?=[\s>{])/g)) {
       if (!NEWS.includes(n[1] ?? '')) problems.push(`${where} data-news="${n[1]}": empty or markup`);
