@@ -10,9 +10,9 @@ requests on Forgejo.
 ## How it works
 
 The pages are rendered by [site-api](https://git.belomaxorka.dev/belomaxorka/site-api) (Go, `html/template`) with live
-data from Koito, Gatus, NUT, Proxmox and the [otoring](https://webring.otomir23.me) webring. Everything works with
-JavaScript off; [htmx](https://htmx.org) refreshes the live units and [Alpine.js](https://alpinejs.dev) handles the
-interface state. No build step.
+data from Koito, Gatus, NUT, Proxmox, Wakapi, GitHub, Telegram and the [otoring](https://webring.otomir23.me) webring
+(its README has the table of sources). Everything works with JavaScript off; [htmx](https://htmx.org) refreshes the
+live units and [Alpine.js](https://alpinejs.dev) handles the interface state. No build step.
 
 - `templates/`: the page, one template per rack unit in `units/`, the light version for old browsers in `lite/`,
   the infrastructure page (`infra.html`)
