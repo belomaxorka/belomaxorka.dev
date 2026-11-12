@@ -1,5 +1,6 @@
 // Live guests (site-api's /events, Server-Sent Events):
 //   online   other guests as patch cords from the patch panel to the switch (app.js draws them by data-guests on <html>);
+//            people only: a bot's stream is not counted (site-api, by the visit counter's rule);
 //   visit    a packet along the fibre to the server; gb: a packet to the KVM;
 //   act      once a second the server's real work: requests, sources fetched, state files written, Gatus checks run;
 //   fresh    units whose source brought new data refresh at once, once a packet reaches them;
