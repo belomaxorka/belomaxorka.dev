@@ -56,9 +56,9 @@
   const out = (r, k) => cords && !!r.unplugged[k];
   const outs = (r) => (cords ? { ...r.unplugged } : {});
 
-  const keyOf = (u) => Rack.keyOf(u);
+  const keyOf = Rack.keyOf;
   const el = Rack.svg;
-  const body = () => document.getElementById('rack-body');
+  const body = Rack.body;
   const units = () => Rack.units(body(), '[data-power]');                   // the ones with a supply, a plug and a cable
   const powers = () => Rack.units(body(), ':is([data-power], [data-host])'); // and the ones running on them: all that can be dark
   const unitBy = (k) => Rack.unitOf(body(), k);
@@ -163,7 +163,7 @@
 
   function ensureDom() {
     room = document.getElementById('room');
-    if (!room || !document.getElementById('rack-body')) return false;
+    if (!room || !Rack.body()) return false;
     useRack();
     svg = document.getElementById('power');
     if (!svg) {

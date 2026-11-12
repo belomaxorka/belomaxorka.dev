@@ -154,7 +154,7 @@
   const unitOf = Rack.unitOf;
   // The units that show a source's data (data-feed, rack.js): where its packets go. The server shows "site": it
   // serves the pages and keeps the state.
-  const feeds = (src) => [...(document.getElementById('rack-body')?.querySelectorAll(`:scope > .u[data-feed~="${CSS.escape(src)}"]`) || [])].map(Rack.keyOf).filter(Boolean);
+  const feeds = (src) => [...(Rack.body()?.querySelectorAll(`:scope > .u[data-feed~="${CSS.escape(src)}"]`) || [])].map(Rack.keyOf).filter(Boolean);
   const site = () => feeds('site')[0] || '';
   // The lamps at a unit's end of its cord: its network card's, and its own net lamp if it has one.
   const ends = (u) => [u.querySelector(':scope > .nic .led'), u.querySelector('.led.net')];
@@ -176,7 +176,7 @@
   // lamps at the leg's end]. A container is reached through its host's cord; a unit not on this rack: no way.
   function route(target) {
     if (!up()) return null;
-    const body = document.getElementById('rack-body');
+    const body = Rack.body();
     const via = unitOf(body, target)?.dataset.host || target;
     const fiber = cord('wan') || cord('uplink'), nic = cord(via), unit = nic && unitOf(body, via);
     if (!fiber || !path(fiber) || !unit) return null;
@@ -186,7 +186,7 @@
     if (lan && path(lan)) legs.push([path(lan), 1, [port(lan)]]);
     legs[legs.length - 1][2].push(port(nic));
     // A packet does not reach a unit without a link.
-    if (path(nic) && !unit.classList.contains('off') && !unit.classList.contains('unlinked')) {
+    if (path(nic) && Rack.linked(unit)) {
       legs.push([path(nic), -1, ends(unit)]);
     }
     return legs;
@@ -241,9 +241,9 @@
   // hop: from one unit to another through the switch (none without a link at either end); lan: the server's way.
   const lan = (from, to) => (up() ? hop(from, to) : null);
   function hop(from, to) {
-    const body = document.getElementById('rack-body');
+    const body = Rack.body();
     const a = cord(from), b = cord(to), ua = a && unitOf(body, from), ub = b && unitOf(body, to);
-    if (!path(a) || !path(b) || !ua || !ub || [ua, ub].some((u) => u.classList.contains('off') || u.classList.contains('unlinked'))) return null;
+    if (!path(a) || !path(b) || !Rack.linked(ua) || !Rack.linked(ub)) return null;
     return [
       [path(a), 1, [port(a)]],
       [path(b), -1, ends(ub)],
@@ -256,7 +256,7 @@
   }
 
   function act(a) {
-    const body = document.getElementById('rack-body');
+    const body = Rack.body();
     if (!body) return;
     const srv = site();
     // Requests served: in through the WAN, the router's LAN port and the switch to the server.
@@ -305,14 +305,14 @@
   }
   // The units that can talk now: their cord in a port with a link, on and linked.
   function talkers() {
-    const body = document.getElementById('rack-body');
+    const body = Rack.body();
     return cords.filter((c) => c.type === 'nic' && port(c)).map((c) => unitOf(body, c.key))
-      .filter((u) => u && !u.classList.contains('off') && !u.classList.contains('unlinked'));
+      .filter((u) => Rack.linked(u));
   }
   // The lamps at both ends of a cord with a link: its port on the switch and the unit's (ends), the router's LAN, the
   // router's WAN for the fibre while the rack is online; the ring's and the guests' cords lead outside, so only then.
   function both(c) {
-    const body = document.getElementById('rack-body'), rtr = Rack.roleOf(body, 'router');
+    const body = Rack.body(), rtr = Rack.roleOf(body, 'router');
     if (c.type === 'wan') return up() ? [rtr?.querySelector('.led.wan')] : [];
     if (!port(c) || ((c.type === 'ring' || c.type === 'guest') && !up())) return [];
     const u = c.type === 'nic' && unitOf(body, c.key);
@@ -336,8 +336,8 @@
   });
   // The server's disk: short bursts, while it has power.
   every(250, 1500, () => {
-    const srv = unitOf(document.getElementById('rack-body'), site());
-    const hdd = srv && !srv.classList.contains('off') ? srv.querySelector('.led.hdd') : null;
+    const srv = unitOf(Rack.body(), site());
+    const hdd = Rack.on(srv) ? srv.querySelector('.led.hdd') : null;
     if (!hdd) return;
     for (let i = 0, n = 1 + Math.floor(Math.random() * 4); i < n; i++) setTimeout(() => flash(hdd), i * (110 + Math.random() * 60));
   });
@@ -348,12 +348,13 @@
     const n = root?.querySelector('[data-news]');
     return n ? (n.dataset.news === 'markup' ? n.innerHTML : n.textContent).replace(/\s+/g, ' ').trim() : null;
   };
-  const keyOf = (u) => (u?.matches('[data-net]') ? Rack.keyOf(u) : '');
+  // The key of a unit on the network, '' for one that is not: a packet has no way to it.
+  const netKey = (u) => (u?.matches('[data-net]') ? Rack.keyOf(u) : '');
   document.addEventListener('htmx:beforeSwap', (e) => {
     const t = e.detail.target, elt = e.detail.requestConfig?.elt || e.detail.elt;
     if (!(elt instanceof Element)) return;
     const unit = elt.closest('#rack-body > .u') || elt.closest('#rack-body > .drawer')?.previousElementSibling;
-    const target = keyOf(unit);
+    const target = netKey(unit);
     if (!target) return;
     const now = t === unit && t.hasAttribute('hx-get') && e.detail.shouldSwap ? news(t) : null;
     if (now !== null && now !== (news(new DOMParser().parseFromString(e.detail.serverResponse, 'text/html')) ?? '')) {

@@ -37,7 +37,7 @@
     if (shown && !shown.isConnected) close();
     const kvm = document.querySelector('#rack-body > .u.kvm');
     const bios = kvm?.querySelector(':scope > .bios');
-    if (!bios || kvm.classList.contains('off') || shown) return;
+    if (!bios || !Rack.on(kvm) || shown) return;
     shown = bios;
     back = document.activeElement;
     bios.hidden = false;
@@ -120,7 +120,7 @@
   const posts = new Map(); // unit key → { i: frame, timers }
   const frames = (s) => s.split('|').reduce((a, f) => [...a, f.startsWith('\n') && a.length ? a.at(-1) + f : f], []);
   function show(k) {
-    const u = Rack.unitOf(document.getElementById('rack-body'), k), p = posts.get(k);
+    const u = Rack.unitOf(Rack.body(), k), p = posts.get(k);
     if (!u) return;
     u.classList.toggle('posting', !!p);
     u.querySelectorAll('[data-post]').forEach((s) => {

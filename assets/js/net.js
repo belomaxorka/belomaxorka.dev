@@ -42,9 +42,9 @@
   // a wan unit with a link but no internet, and the rack without internet: .nonet. The router shows .nowan and .nolan.
   let feedTimer = 0;
   function sync() {
-    const body = document.getElementById('rack-body'), rk = document.getElementById('rack');
+    const body = Rack.body(), rk = document.getElementById('rack');
     if (!body || !rk) return;
-    const on = (u) => !!u && !u.classList.contains('off');
+    const on = Rack.on;
     const tor = Rack.roleOf(body, 'switch'), rtr = Rack.roleOf(body, 'router');
     const cut = (k) => has(k) && down(k);
     const switchUp = on(tor);
@@ -146,7 +146,7 @@
 
   // A drawer without the details (data-later): the same drawer component (app.js), pushed back by its handle, with only the error.
   function empty(handle) {
-    const box = document.getElementById('drawer-' + handle.dataset.unit), body = document.getElementById('rack-body');
+    const box = document.getElementById('drawer-' + handle.dataset.unit), body = Rack.body();
     if (!box || box.classList.contains('open') || !body) return;
     const d = document.createElement('div'), slide = document.createElement('div');
     d.className = 'drawer open';
@@ -255,7 +255,7 @@
     if (!c || pulled(key)) return;
     document.querySelectorAll('#cables > g')[c.wire]?.classList.add('probe');
     c.port?.classList.add('probe');
-    const body = document.getElementById('rack-body');
+    const body = Rack.body();
     if (c.type === 'nic' && body) unitOf(body, key)?.querySelector(':scope > .nic')?.classList.add('probe');
   }
 

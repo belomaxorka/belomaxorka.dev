@@ -77,11 +77,18 @@ window.Rack = (() => {
   const unitOf = (body, k) => (body && k ? body.querySelector(`:scope > .u[data-key="${CSS.escape(k)}"]`) : null);
   // units(body, filter): the active units of a rack, top to bottom; filter narrows them ('[data-power]', '[data-net]').
   const units = (body, filter = '') => (body ? [...body.querySelectorAll(`:scope > .u[data-key]${filter}`)] : []);
+  // body(): the units' column of the rack in the room now (the aisle swaps it), or null.
+  const body = () => document.getElementById('rack-body');
   const roleOf = (body, role) => body?.querySelector(`:scope > .u[data-role="${role}"]`) || null;
-  // The one rule for everything that changes on its own (data, blinks, packets, cycling screens, other visitors):
-  //   live(u):   the unit gets its data now: it has power and is online (net.js marks .unlinked and .nonet);
+  // The one rule for everything that changes on its own (data, blinks, packets, cycling screens, other visitors), a
+  // step at a time; nobody reads the classes behind it for themselves:
+  //   on(u):     the unit has power (power.js marks .off);
+  //   linked(u): and a link, so the rack's own network reaches it (net.js marks .unlinked);
+  //   live(u):   and the internet if it needs it, so it gets its data now (net.js marks .nonet);
   //   reached(): anything from outside reaches this rack now: it has power and the internet (net.js marks #rack .nonet).
-  const live = (u) => !!u && !u.classList.contains('off') && !u.classList.contains('unlinked') && !u.classList.contains('nonet');
+  const on = (u) => !!u && !u.classList.contains('off');
+  const linked = (u) => on(u) && !u.classList.contains('unlinked');
+  const live = (u) => linked(u) && !u.classList.contains('nonet');
   const reached = () => { const r = document.getElementById('rack'); return !!r && !r.classList.contains('nonet') && !r.classList.contains('powered-off'); };
   const hostOf = (body, u) => (u?.dataset.host ? unitOf(body, u.dataset.host) : null);
   const guestsOf = (body, k) => units(body, `[data-host="${CSS.escape(k)}"]`);
@@ -274,7 +281,7 @@ window.Rack = (() => {
 
   return {
     store, motion, here, drawerURL, dist, tween,
-    TOY_TTL, toyStore, keyOf, unitOf, units, roleOf, hostOf, guestsOf, live, reached, svg, stepRope, ropePath, cord, setCord,
+    TOY_TTL, toyStore, keyOf, unitOf, units, body, roleOf, hostOf, guestsOf, on, linked, live, reached, svg, stepRope, ropePath, cord, setCord,
     loop, hand, tester,
     pulled: () => new Set(), // net.js: which cords of this rack are out
     rackPower: () => ({ on: true, unplugged: {}, draining: false }), // power.js: another rack's power (net.js, R1 for the row)

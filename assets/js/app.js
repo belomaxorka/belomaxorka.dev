@@ -325,7 +325,7 @@
   // ---------- unit heights in whole U, the rail numbers ----------
   // A pulled-out drawer takes space in the rack too: it counts as a unit.
   function snap() {
-    const body = document.getElementById('rack-body');
+    const body = Rack.body();
     if (!body) return;
     const U = parseFloat(getComputedStyle(body).getPropertyValue('--U'));
     const units = [...body.querySelectorAll(':scope > .u, :scope > .drawer.open')];
@@ -389,7 +389,7 @@
   // The units' network cards and the vertical organiser: decoration that exists only with JS (like the power inlets).
   // A card on every unit on the network (data-net, rack.js) but the guests: they use their host's.
   function wire() {
-    const body = document.getElementById('rack-body');
+    const body = Rack.body();
     if (!body || !Rack.roleOf(body, 'switch')) return [];
     if (!body.querySelector(':scope > .vm')) {
       const vm = document.createElement('div');
@@ -442,7 +442,7 @@
     live.setAttribute('viewBox', `0 0 ${R.width} ${R.height}`);
     live.replaceChildren(...svg.childNodes);
     // The ports' lamps are net.js's: lit for the cords with a link.
-    Rack.roleOf(document.getElementById('rack-body'), 'switch')?.querySelectorAll(':is(.tp, .sfp-port).link').forEach(t => t.classList.remove('link'));
+    Rack.roleOf(Rack.body(), 'switch')?.querySelectorAll(':is(.tp, .sfp-port).link').forEach(t => t.classList.remove('link'));
     return cords;
   }
 
@@ -456,7 +456,7 @@
       return { x: b.left - R.left, y: b.top - R.top, r: b.right - R.left, b: b.bottom - R.top, cx: b.left - R.left + b.width / 2, cy: b.top - R.top + b.height / 2, w: b.width, h: b.height };
     };
     const rack = document.getElementById('rack');
-    const tor = Rack.roleOf(document.getElementById('rack-body'), 'switch');
+    const tor = Rack.roleOf(Rack.body(), 'switch');
     if (!rack || !tor) return cords;
     const cap = box(rack.querySelector('.cap'));
     const port = (n) => tor.querySelector(`.tp[data-port="${n - 1}"]`);
@@ -558,7 +558,7 @@
     };
 
     // The router: LAN -> the last port of the bottom row, WAN as fibre to the trays.
-    const rtr = Rack.roleOf(document.getElementById('rack-body'), 'router');
+    const rtr = Rack.roleOf(Rack.body(), 'router');
     let next = 2; // bottom row: even ports in order
     const bottom = () => { while (next <= 24 && (used.has(next) || !port(next)?.offsetParent)) next += 2; return next <= 24 ? next : 0; };
     if (rtr) {
@@ -625,7 +625,7 @@
     if (moved) later();
   }) : null;
   function layout() {
-    const body = document.getElementById('rack-body');
+    const body = Rack.body();
     if (ro && body && body !== watched) { if (watched) ro.unobserve(watched); ro.observe(body); watched = body; }
     if (fro) {
       fields.forEach((_, t) => { if (!t.isConnected) { fro.unobserve(t); fields.delete(t); } });
