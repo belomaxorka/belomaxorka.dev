@@ -5,8 +5,9 @@
 <head>
 <meta charset="utf-8">
 {{/* Only the site's own scripts (Alpine's CSP build: no eval, no inline scripts or handlers) and styles, images
-     over https. site-api sends frame-ancestors, base-uri and form-action as a header. */}}
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+     over https; and hCaptcha, the guestbook's captcha (captcha.js loads it once the form is touched). site-api sends
+     frame-ancestors, base-uri and form-action as a header. */}}
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://hcaptcha.com https://*.hcaptcha.com; frame-src https://hcaptcha.com https://*.hcaptcha.com; style-src 'self' 'unsafe-inline' https://hcaptcha.com https://*.hcaptcha.com; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://hcaptcha.com https://*.hcaptcha.com; media-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 {{- /* Canonical is the rack's address. Pulled-out units and stub racks are noindex. */ -}}
 {{- $home := eq .Rack.Path "/"}}
@@ -62,6 +63,7 @@
 <script defer src="{{asset "js/rack.js"}}"></script>
 <script defer src="{{asset "js/app.js"}}"></script>
 <script defer src="{{asset "js/oekaki.js"}}"></script>
+<script defer src="{{asset "js/captcha.js"}}"></script>
 <script defer src="{{asset "js/power.js"}}"></script>
 <script defer src="{{asset "js/net.js"}}"></script>
 <script defer src="{{asset "js/sticker.js"}}"></script>

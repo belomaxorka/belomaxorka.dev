@@ -49,6 +49,12 @@
 .kb .keys { display: grid; gap: 6px; align-content: start; }
 .kb .opts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--dim); align-items: center; justify-content: space-between; }
 .kb label { display: inline-flex; align-items: center; gap: 6px; min-height: 26px; }
+/* The captcha (assets/js/captcha.js): hCaptcha's widget is an iframe of its own, 303x78 (164x144 compact). Hidden
+   until it or one of its notes is there. */
+.kb .captcha { grid-column: 1 / -1; display: grid; gap: 6px; justify-items: start; }
+@media (scripting: enabled) { .kb .captcha:not(:has(iframe, .note:not([hidden]))) { display: none; } }
+.kb .captcha .note, .kb .captcha noscript { margin: 0; font-size: 13px; color: var(--led-err); }
+.kb .captcha a { color: inherit; }
 .kb .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
 /* The drawing pad (assets/js/oekaki.js). flex, not grid: in a grid the row was sized by the canvas's natural size. */

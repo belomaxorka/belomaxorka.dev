@@ -1,5 +1,6 @@
 {{/* The KVM is the guestbook. The form works without JS (POST and redirect), with JS through htmx and with a
-     drawing (oekaki.js). Entries show after moderation. */}}
+     drawing (oekaki.js). With hCaptcha's site key (.Captcha) site-api wants the captcha solved (captcha.js): without
+     JS the light version takes messages. Entries show after moderation. */}}
 {{define "unit-kvm"}}
 <section class="u kvm" style="--h:5" aria-labelledby="gbh" id="unit-kvm" data-key="kvm" data-power data-net="wan" data-feed="guestbook">
   {{/* Easter egg (toys.js): the Konami code or five taps on the caption open BIOS Setup. */}}
@@ -79,6 +80,12 @@
           <p class="pad-warn" x-show="tooBig" role="status">{{t "gb.pad.toobig"}}</p>
         </div>
       </div>
+      {{with .Captcha}}<div class="captcha" x-data="captcha" data-sitekey="{{.}}">
+        <div x-ref="widget"></div>
+        <p class="note" hidden :hidden="!need" role="status">{{t "gb.err.captcha"}}</p>
+        <p class="note" hidden :hidden="!failed" role="status">{{th "gb.captcha.failed"}}</p>
+        <noscript>{{th "gb.captcha.nojs"}}</noscript>
+      </div>{{end}}
       <div class="opts"><label><input type="checkbox" name="private" value="1"> {{t "gb.private"}}</label><span>{{t "gb.rules"}}</span></div>
     </form>
     {{end}}
