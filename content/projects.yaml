@@ -3,6 +3,8 @@
 # site) is what GitHub says of the repository: site-api reads it every 30 minutes, a new one on its next round.
 #   repo - owner/name on GitHub;
 #   tape - the nameplate's colour: empty (black), r (red), b (blue).
+- repo: haulnet/haulnet-repo
+
 - repo: yaopl/yaopl
   tape: r
 
